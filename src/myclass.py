@@ -1,12 +1,21 @@
-class MyClass:
+class Dog:
   def __init__(self):
     pass
   
-  def hello(self):
-    print('hello')
+  def bark(self):
+    print('woof')
 
-  def goodbye(self):
-    print('goodbye')
+  def eat(self):
+    print('nom')
 
 
-import pprint
+
+class Cat:
+  def __init__(self):
+    pass
+
+  def meow(self):
+    print('meow')
+
+  def eat(self):
+    print('nom')

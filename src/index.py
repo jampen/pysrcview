@@ -24,10 +24,15 @@ def gather(root, thing, cache = set()):
     if name.startswith('_'):
       continue
 
-    if name in cache:
+    uniquename = root
+
+
+    print(uniquename)
+
+    if uniquename in cache:
       continue
 
-    cache.add(name)
+    cache.add(uniquename)
     result = gather(
       f'{root}.{name}',
       evaluation)
@@ -51,7 +56,6 @@ def add(data, graph: nx.Graph):
 data = gather('myclass', myclass)
 graph = nx.Graph()
 add(data, graph)
-
 
 nx.draw(graph, with_labels=True)
 plt.show()
