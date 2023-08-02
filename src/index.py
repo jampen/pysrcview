@@ -1,65 +1,108 @@
+import inspect
+import myfile
 import networkx as nx
 import matplotlib.pyplot as plt
-import myclass as myclass
 from pprint import pprint
 
-def gather(root, thing, cache = set()):
-  dirs = dir(thing)
-  dirs = [d for d in dirs if not d.startswith('__')]
-  tree = [root]
 
-  for d in dirs:
+def evaluate(string):
     try:
-      evaluation = eval(f'{root}.{d}')
+        evaluation = eval(string)
     except AttributeError as ae:
-      continue
+        return None
     except SyntaxError as se:
-      continue
-    
+        return None
+    except ModuleNotFoundError as mfne:
+        return None
+
     if not hasattr(evaluation, '__name__'):
-      continue
+        return None
 
-    name = evaluation.__name__
-
-    if name.startswith('_'):
-      continue
-
-    uniquename = root
+    return evaluation
 
 
-    print(uniquename)
+class Node:
+    def __init__(self, name, id, item):
+        self.name = name
+        self.id = id
+        self.item = item
 
-    if uniquename in cache:
-      continue
+    def __hash__(self):
+        return hash(self.id)
 
-    cache.add(uniquename)
-    result = gather(
-      f'{root}.{name}',
-      evaluation)
-      
-    tree.append(result)
+    def __str__(self):
+        return self.name
 
-  return tree
+    def color(self):
+        if inspect.ismethod(self.item):
+            return 'red'
+        elif inspect.isfunction(self.item) or inspect.isroutine(self.item):
+            return 'yellow'
+        elif inspect.ismodule(self.item):
+            return 'orange'
+        elif inspect.isclass(self.item):
+            return 'green'
+        else:
+            return 'blue'
 
-def add(data, graph: nx.Graph):
-  name = data[0]
-  graph.add_node(name)
+    def weight(self):
+        if inspect.ismethod(self.item):
+            return 1.0
+        elif inspect.isfunction(self.item) or inspect.isroutine(self.item):
+            return 1.0
+        elif inspect.ismodule(self.item):
+            return 1.0
+        elif inspect.isclass(self.item):
+            return 1.0
+        else:
+            return 1.0
 
-  if len(data) >= 2:
-    rest = data[1:]
-    rest = [item for item in rest if item not in graph]
 
-    for item in rest:
-      add(item, graph)
-      graph.add_edge(name, item[0])
+def gather(root, cache=set()):
+    item = evaluate(root)
+    dirs = dir(item)
+    dirs = [d for d in dirs if not d.startswith('__')]
 
-data = gather('myclass', myclass)
-graph = nx.Graph()
-add(data, graph)
+    name = root.split('.')[-1]
+    tree = [Node(name, root, item)]
 
-nx.draw(graph, with_labels=True)
-plt.show()
+    for d in dirs:
+        evalstr = f'{root}.{d}'
 
-#graph = nx.DiGraph(edges)
-#nx.draw(graph, with_labels=True)
-#plt.show()
+        result = gather(
+            evalstr,
+            cache
+        )
+
+        if result != None:
+            tree.append(result)
+
+    return tree
+
+
+def add(data, graph: nx.DiGraph):
+    node = data[0]
+    graph.add_node(node, color=node.color())
+
+    if len(data) >= 2:
+        rest = data[1:]
+
+        for item in rest:
+            add(item, graph)
+            graph.add_edge(node, item[0])
+
+
+if __name__ == '__main__':
+    data = gather('myfile')
+    graph = nx.Graph()
+    add(data, graph)
+
+    color_map = [node.color() for node in graph]
+    weight_map = [node.weight() for node in graph]
+
+    nx.draw(graph, with_labels=True, node_color=color_map)
+    plt.show()
+
+    # graph = nx.DiGraph(edges)
+    # nx.draw(graph, with_labels=True)
+    # plt.show()
